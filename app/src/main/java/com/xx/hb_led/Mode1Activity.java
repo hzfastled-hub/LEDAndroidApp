@@ -4,6 +4,7 @@ package com.xx.hb_led;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.widget.Toast;
 import android.serialport.SerialPort;
 import android.serialport.SerialPortFinder;
 import android.text.TextUtils;
@@ -47,6 +48,11 @@ public class Mode1Activity extends Activity implements ConfigManager.OnConfigCha
         layout = (LinearLayout) findViewById(R.id.main_layout);
         tv1.setText(ConfigManager.getInstance().getTitle());
         tv2.setText(ConfigManager.getInstance().getTitle2());
+
+        // 显示配置加载状态（调试用）
+        String debugInfo = ConfigManager.getInstance().getDebugInfo();
+        Log.d("hongbin", "配置状态:\n" + debugInfo);
+        Toast.makeText(this, debugInfo, Toast.LENGTH_LONG).show();
 
         // 监听配置变更，热更新标题
         ConfigManager.getInstance().addListener(this);
@@ -345,6 +351,7 @@ public class Mode1Activity extends Activity implements ConfigManager.OnConfigCha
             public void run() {
                 tv1.setText(ConfigManager.getInstance().getTitle());
                 tv2.setText(ConfigManager.getInstance().getTitle2());
+                Toast.makeText(Mode1Activity.this, "配置已更新: " + ConfigManager.getInstance().getMapSize() + "个班组", Toast.LENGTH_SHORT).show();
             }
         });
     }
