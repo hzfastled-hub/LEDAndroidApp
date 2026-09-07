@@ -37,6 +37,13 @@ public class ConfigManager {
     private static final String CONFIG_FILE = "LED_CONFIG.txt";
     private static final String SERIAL_FLAG = "led_check_serial";
     private static final long RELOAD_INTERVAL = 1000; // 防抖：1秒内只重载一次
+    // 尝试多个存储路径，兼容不同 Android 设备
+    private static final String[] CONFIG_DIRS = {
+            "/sdcard",
+            "/storage/emulated/0",
+            "/storage/sdcard0",
+            "/mnt/sdcard"
+    };
 
     private static ConfigManager sInstance;
 
@@ -61,6 +68,20 @@ public class ConfigManager {
             sInstance = new ConfigManager();
         }
         return sInstance;
+    }
+
+    /**
+     * 从多个可能的路径中查找配置文件
+     */
+    private File findConfigFile() {
+        for (String dir : CONFIG_DIRS) {
+            File file = new File(dir, CONFIG_FILE);
+            if (file.exists() && file.canRead()) {
+                return file;
+            }
+        }
+        // 都不存在时返回默认路径（用于日志提示）
+        return new File(CONFIG_DIRS[0], CONFIG_FILE);
     }
 
     /**
@@ -118,15 +139,15 @@ public class ConfigManager {
      * 通过 synchronized 保证与串口读取线程的可见性。
      */
     public synchronized boolean loadConfig() {
-        File sdCard = new File("/sdcard");
-        File file = new File(sdCard, CONFIG_FILE);
+        File file = findConfigFile();
 
         if (!file.exists() || !file.canRead()) {
-            Log.d(TAG, "配置文件不存在或不可读");
+            Log.d(TAG, "配置文件不存在或不可读: " + file.getAbsolutePath());
             onError();
             return false;
         }
 
+        Log.d(TAG, "找到配置文件: " + file.getAbsolutePath());
         mLastModified = file.lastModified();
 
         // 重试机制：最多读3次，每次间隔200ms，避免读到写入中的文件
@@ -216,7 +237,7 @@ public class ConfigManager {
      * 启动文件监听器，支持配置热重载
      */
     private void startFileObserver() {
-        File configFile = new File("/sdcard", CONFIG_FILE);
+        File configFile = findConfigFile();
         String parentPath = configFile.getParent();
 
         if (parentPath == null) {
@@ -256,7 +277,7 @@ public class ConfigManager {
             @Override
             public void run() {
                 try {
-                    File file = new File("/sdcard", CONFIG_FILE);
+                    File file = findConfigFile();
                     if (file.exists()) {
                         long modified = file.lastModified();
                         if (modified != 0 && modified != mLastModified) {
@@ -335,6 +356,25 @@ public class ConfigManager {
         synchronized (this) {
             return _MODE;
         }
+    }
+
+    /**
+     * 获取调试信息（用于在界面上显示配置加载状态）
+     */
+    public synchronized String getDebugInfo() {
+        File file = findConfigFile();
+        StringBuilder sb = new StringBuilder();
+        sb.append("配置文件: ").append(file.getAbsolutePath()).append("\n");
+        sb.append("文件存在: ").append(file.exists() ? "是" : "否").append("\n");
+        sb.append("可读: ").append(file.canRead() ? "是" : "否").append("\n");
+        if (file.exists()) {
+            sb.append("文件大小: ").append(file.length()).append(" 字节\n");
+        }
+        sb.append("已加载班组: ").append(_MAP.size()).append(" 个\n");
+        sb.append("屏号: ").append(_ID).append("\n");
+        sb.append("标题: ").append(_TITLE).append("/").append(_TITLE2).append("\n");
+        sb.append("模式: ").append(_MODE).append("\n");
+        return sb.toString();
     }
 
     private void onError() {
