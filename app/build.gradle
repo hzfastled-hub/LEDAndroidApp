@@ -1,0 +1,38 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 21
+    defaultConfig {
+        applicationId "com.ts.hb_led"
+        minSdkVersion 19
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+//        ndk {
+//            //选择要添加的对应cpu类型的.so库。
+//            abiFilters 'armeabi', 'armeabi-v7a', 'x86'
+//        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation files('libs/xixun_card_settings_1.2.4.jar')
+
+//    implementation 'tp.xmaihh:serialport:2.1'
+//    implementation 'android_serialport_api:serialport-api:1.0'
+
+    // 传统4KB内存页面版本
+//    implementation 'com.licheedev:android-serialport:2.1.4'
+    // 适配16KB页面版本，https://developer.android.google.cn/guide/practices/page-sizes?hl=zh-cn
+    implementation 'com.licheedev:android-serialport:2.1.5'
+}

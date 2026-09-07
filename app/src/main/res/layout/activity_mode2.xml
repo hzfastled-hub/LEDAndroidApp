@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#ff000000">
+
+    <TextView
+        android:id="@+id/tv1"
+        android:layout_width="64px"
+        android:layout_height="64px"
+        android:layout_marginLeft="64px"
+        android:textSize="48px"
+        android:gravity="center"
+        android:text="AB"
+        android:textColor="#ffffffff"
+        android:background="#ff000000"
+        android:includeFontPadding="false"/>
+
+    <FrameLayout
+        android:id="@+id/main_layout"
+        android:layout_width="64px"
+        android:layout_height="64px"
+        android:layout_marginLeft="64px">
+
+        <TextView
+            android:id="@+id/tv2"
+            android:layout_width="64px"
+            android:layout_height="64px"
+            android:textSize="16px"
+            android:includeFontPadding="false"
+            android:lineSpacingExtra="-1px"
+            android:lineSpacingMultiplier="1.1"
+            android:text=""
+            android:textColor="#ffffff"
+            android:background="#000000"/>
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/click"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@color/colorPrimary"
+        android:layout_marginTop="48dp"/>
+
+</LinearLayout>
