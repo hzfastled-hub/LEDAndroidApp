@@ -247,18 +247,18 @@ public class Mode1Activity extends Activity implements ConfigManager.OnConfigCha
                 }
                 Log.d("hongbin", "班组信息：" + (int)realByte[7] + "【" + className + "】");
 
-                boolean t = realByte[6] == (byte)0x88;
+                final boolean t = realByte[6] == (byte)0x88;
                 if(t){
                     Log.d("hongbin", "显示");
                 } else {
                     Log.d("hongbin", "关闭");
                 }
 
-                changeShowClass(t, className);
-
+                final String clsName = className;
                 layout.post(new Runnable() {
                     @Override
                     public void run() {
+                        changeShowClass(t, clsName);
                         updateTextView();
                     }
                 });
