@@ -51,6 +51,9 @@ public class Mode2Activity extends Activity implements ConfigManager.OnConfigCha
         Log.d("hongbin", "Mode2配置状态:\n" + debugInfo);
         Toast.makeText(this, debugInfo, Toast.LENGTH_LONG).show();
 
+        // 初始刷新一次标题显示
+        updateLayout();
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -98,28 +101,35 @@ public class Mode2Activity extends Activity implements ConfigManager.OnConfigCha
         });
     }
 
-    Runnable viewJob = new Runnable() {
+    Runnable flipJob = new Runnable() {
         @Override
         public void run() {
-            updateLayout();
+            flipToNextPage();
         }
     };
 
     private void updateLayout() {
+        // 刷新显示：保持当前页下标，不翻页（数据/配置变化时调用）
         titleView.setText(ConfigManager.getInstance().getTitle());
-        if(layoutIndex>=tvList.size()){
-            layoutIndex = 0;
-        }
         layout.removeAllViews();
         if(tvList.size() == 0){
             titleView.setTextColor(Color.GREEN);
             return;
-        } else {
-            titleView.setTextColor(Color.RED);
         }
-        View child = tvList.get(layoutIndex);
-        layout.addView(child);
-        layoutIndex++;
+        titleView.setTextColor(Color.RED);
+        if(layoutIndex >= tvList.size()){
+            layoutIndex = 0;
+        }
+        layout.addView(tvList.get(layoutIndex));
+    }
+
+    private void flipToNextPage() {
+        // 定时翻页：多页时翻到下一页；单页或无内容时不动作
+        if(tvList.size() <= 1){
+            return;
+        }
+        layoutIndex = (layoutIndex + 1) % tvList.size();
+        updateLayout();
     }
 
     private class SleepThread extends Thread {
@@ -127,10 +137,7 @@ public class Mode2Activity extends Activity implements ConfigManager.OnConfigCha
         public void run() {
             super.run();
             while (true) {
-                // 多页时才定时翻页；单页或无内容时不做周期性刷新
-                if (tvList.size() > 1) {
-                    layout.post(viewJob);
-                }
+                layout.post(flipJob);
                 try {
                     int interval = ConfigManager.getInstance().getUpdateTime();
                     if (interval <= 0) {
@@ -223,6 +230,7 @@ public class Mode2Activity extends Activity implements ConfigManager.OnConfigCha
                             showClass.remove(clsName);
                         }
                         updateTextView();
+                        updateLayout();
                     }
                 });
 
