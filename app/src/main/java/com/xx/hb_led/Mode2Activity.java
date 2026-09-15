@@ -2,6 +2,7 @@ package com.xx.hb_led;
 
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.serialport.SerialPort;
@@ -12,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ts.hb_led.R;
 
@@ -44,6 +46,11 @@ public class Mode2Activity extends Activity implements ConfigManager.OnConfigCha
 
         // 监听配置变更，热更新标题
         ConfigManager.getInstance().addListener(this);
+
+        // 显示配置加载状态（调试用，同时用于确认当前运行的APK版本）
+        String debugInfo = ConfigManager.getInstance().getDebugInfo();
+        Log.d("hongbin", "Mode2配置状态:\n" + debugInfo);
+        Toast.makeText(this, debugInfo, Toast.LENGTH_LONG).show();
 
         new Thread(new Runnable() {
             @Override
@@ -121,9 +128,16 @@ public class Mode2Activity extends Activity implements ConfigManager.OnConfigCha
         public void run() {
             super.run();
             while (true) {
-                layout.post(viewJob);
+                // 多页时才定时翻页；单页或无内容时不做周期性刷新
+                if (tvList.size() > 1) {
+                    layout.post(viewJob);
+                }
                 try {
-                    Thread.sleep(ConfigManager.getInstance().getUpdateTime() * 1000);
+                    int interval = ConfigManager.getInstance().getUpdateTime();
+                    if (interval <= 0) {
+                        interval = 5; // 防止配置异常导致高速循环翻页
+                    }
+                    Thread.sleep(interval * 1000L);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -286,10 +300,21 @@ public class Mode2Activity extends Activity implements ConfigManager.OnConfigCha
 
     @Override
     public void onConfigChanged() {
-        // 配置变更时刷新翻页显示（在主线程执行）
+        // 配置变更时在主线程处理
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                // 模式变更时切换界面（配置热切换，无需重启应用）
+                int mode = ConfigManager.getInstance().getMode();
+                if (mode != 2) {
+                    if (mode == 1) {
+                        startActivity(new Intent(Mode2Activity.this, Mode1Activity.class));
+                    } else {
+                        startActivity(new Intent(Mode2Activity.this, MainActivity.class));
+                    }
+                    finish();
+                    return;
+                }
                 updateLayout();
             }
         });
