@@ -2,7 +2,6 @@ package com.xx.hb_led;
 
 
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -354,12 +353,6 @@ public class Mode1Activity extends Activity implements ConfigManager.OnConfigCha
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                // 模式变更时切换界面（配置热切换，无需重启应用）
-                if (ConfigManager.getInstance().getMode() == 2) {
-                    startActivity(new Intent(Mode1Activity.this, Mode2Activity.class));
-                    finish();
-                    return;
-                }
                 tv1.setText(ConfigManager.getInstance().getTitle());
                 tv2.setText(ConfigManager.getInstance().getTitle2());
                 Toast.makeText(Mode1Activity.this, "配置已更新: " + ConfigManager.getInstance().getMapSize() + "个班组", Toast.LENGTH_SHORT).show();

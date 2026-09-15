@@ -2,7 +2,6 @@ package com.xx.hb_led;
 
 
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.serialport.SerialPort;
@@ -300,21 +299,10 @@ public class Mode2Activity extends Activity implements ConfigManager.OnConfigCha
 
     @Override
     public void onConfigChanged() {
-        // 配置变更时在主线程处理
+        // 配置变更时刷新翻页显示（在主线程执行）
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                // 模式变更时切换界面（配置热切换，无需重启应用）
-                int mode = ConfigManager.getInstance().getMode();
-                if (mode != 2) {
-                    if (mode == 1) {
-                        startActivity(new Intent(Mode2Activity.this, Mode1Activity.class));
-                    } else {
-                        startActivity(new Intent(Mode2Activity.this, MainActivity.class));
-                    }
-                    finish();
-                    return;
-                }
                 updateLayout();
             }
         });
