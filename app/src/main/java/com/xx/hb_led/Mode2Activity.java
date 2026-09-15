@@ -113,7 +113,8 @@ public class Mode2Activity extends Activity implements ConfigManager.OnConfigCha
         titleView.setText(ConfigManager.getInstance().getTitle());
         layout.removeAllViews();
         if(tvList.size() == 0){
-            titleView.setTextColor(Color.GREEN);
+            // 单红色LED屏无法显示绿色，统一用红色
+            titleView.setTextColor(Color.RED);
             return;
         }
         titleView.setTextColor(Color.RED);

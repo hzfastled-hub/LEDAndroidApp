@@ -139,8 +139,9 @@ public class Mode1Activity extends Activity implements ConfigManager.OnConfigCha
     private void updateTextView() {
         layout.removeAllViews();
         if(showClass.size() == 0){
-            tv1.setTextColor(Color.GREEN);
-            tv2.setTextColor(Color.GREEN);
+            // 单红色LED屏无法显示绿色，统一用红色
+            tv1.setTextColor(Color.RED);
+            tv2.setTextColor(Color.RED);
             return;
         } else {
             tv1.setTextColor(Color.RED);
