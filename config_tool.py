@@ -27,6 +27,7 @@ import os
 import subprocess
 import sys
 import time
+import hashlib
 
 # ==================== 常量 ====================
 CONFIG_FILE = "LED_CONFIG.txt"
@@ -184,7 +185,8 @@ def push_config(local_file):
         return False
 
     local_size = os.path.getsize(local_file)
-    print(f"[2/4] 本地配置文件大小: {local_size} 字节")
+    local_md5 = hashlib.md5(open(local_file, "rb").read()).hexdigest()
+    print(f"[2/4] 本地配置文件大小: {local_size} 字节, MD5: {local_md5}")
 
     # 步骤1：推送到临时文件
     print(f"[3/4] 推送到临时文件 {TEMP_PATH} ...")
@@ -201,23 +203,37 @@ def push_config(local_file):
         return False
     print(f"  OK 临时文件推送成功 ({temp_size} 字节)")
 
-    # 步骤2：原子重命名
+    # 步骤2：原子重命名（FUSE 文件系统 mv 可能失败，降级为 cp+rm）
     print(f"[4/4] 原子重命名为 {DEVICE_PATH} ...")
     _, ok = run_adb(["shell", "mv", "-f", TEMP_PATH, DEVICE_PATH])
     if not ok:
-        print("  X 重命名失败")
-        run_adb(["shell", "rm", TEMP_PATH])
-        return False
+        print("  mv 失败，尝试 cp + rm ...")
+        _, ok1 = run_adb(["shell", "cp", TEMP_PATH, DEVICE_PATH])
+        run_adb(["shell", "rm", "-f", TEMP_PATH])
+        if not ok1:
+            print("  X cp 也失败")
+            return False
 
-    # 最终校验
-    time.sleep(0.3)
+    # 刷盘：确保 FUSE 层数据落盘
+    run_adb(["shell", "sync"])
+
+    # 最终校验：大小 + 内容
+    time.sleep(0.5)
     final_size = get_device_size(DEVICE_PATH)
     if final_size != local_size:
         print(f"  X 最终文件大小不匹配 (期望 {local_size}, 实际 {final_size})")
         return False
 
-    print(f"  OK 配置推送成功! ({final_size} 字节)")
-    return True
+    # 内容回读校验（MD5 比对）
+    remote_md5, _ = run_adb(["shell", "md5sum", DEVICE_PATH])
+    if remote_md5:
+        remote_md5 = remote_md5.split()[0]
+    if remote_md5 and local_md5 and remote_md5 == local_md5:
+        print(f"  OK 配置推送成功! ({final_size} 字节, 内容校验通过)")
+        return True
+    else:
+        print(f"  X 内容校验失败 (本地 {local_md5}, 远程 {remote_md5})")
+        return False
 
 
 def read_device_config():
