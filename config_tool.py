@@ -53,10 +53,21 @@ def validate_config(config):
         return False, "配置不是 JSON 对象"
     if config.get("_SERIAL") != SERIAL_FLAG:
         return False, "_SERIAL 标识不匹配"
+    # _MODE 必须为 1（滚动）或 2（翻页），否则应用会停留在黑屏主界面
+    mode = config.get("_MODE")
+    if mode not in (1, 2):
+        return False, f"_MODE 无效（当前: {mode}），必须为 1 或 2"
+    # _ID 必须有值（屏号，用于串口数据寻址匹配）
+    screen_id = config.get("_ID")
+    if screen_id is None or str(screen_id).strip() == "":
+        return False, "_ID 不能为空"
+    # _TITLE 必须有值（应用启动时直接读取显示）
+    if not str(config.get("_TITLE", "")).strip():
+        return False, "_TITLE 不能为空"
     _map = config.get("_MAP")
     if not isinstance(_map, list) or len(_map) == 0:
         return False, "_MAP 为空"
-    return True, f"校验通过（{len(_map)} 个班组）"
+    return True, f"校验通过（模式{mode}、屏号{screen_id}、{len(_map)} 个班组）"
 
 
 # ==================== ADB 操作 ====================
@@ -185,7 +196,8 @@ def push_config(local_file):
         return False
 
     local_size = os.path.getsize(local_file)
-    local_md5 = hashlib.md5(open(local_file, "rb").read()).hexdigest()
+    with open(local_file, "rb") as f:
+        local_md5 = hashlib.md5(f.read()).hexdigest()
     print(f"[2/4] 本地配置文件大小: {local_size} 字节, MD5: {local_md5}")
 
     # 步骤1：推送到临时文件
